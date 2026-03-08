@@ -3,40 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Fortnite JS - Fixed Build</title>
+    <title>Fortnite JS - Full Unsimplified</title>
     <style>
-        body { margin: 0; overflow: hidden; font-family: sans-serif; background: #000; touch-action: none; }
-        #gui { position: absolute; top: 10px; left: 10px; color: white; background: rgba(0,0,0,0.6); padding: 12px; border-radius: 8px; font-size: 13px; pointer-events: none; z-index: 10; }
-        #storm-timer { position: absolute; top: 10px; right: 10px; color: #ff4444; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 5px; font-weight: bold; z-index: 10; border: 1px solid #ff4444; }
-        #crosshair { position: absolute; top: 50%; left: 50%; width: 12px; height: 12px; border: 2px solid white; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; z-index: 5; }
+        body { margin: 0; overflow: hidden; font-family: 'Arial', sans-serif; background: #000; touch-action: none; }
+        #gui { position: absolute; top: 10px; left: 10px; color: white; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 5px; z-index: 10; pointer-events: none; border-left: 4px solid #f1c40f; }
+        #storm-info { position: absolute; top: 10px; right: 10px; color: #ff4444; background: rgba(0,0,0,0.8); padding: 10px; border-radius: 5px; font-weight: bold; z-index: 10; border: 1px solid red; }
+        #crosshair { position: absolute; top: 50%; left: 50%; width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.8); border-radius: 50%; transform: translate(-50%, -50%); z-index: 5; pointer-events: none; }
+        #crosshair::before { content: ''; position: absolute; top: 50%; left: 50%; width: 2px; height: 2px; background: red; transform: translate(-50%, -50%); }
         
-        /* Кнопки */
-        .mobile-btn { position: absolute; width: 65px; height: 65px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; user-select: none; z-index: 20; border: 2px solid rgba(255,255,255,0.5); }
-        #btn-shoot { bottom: 130px; right: 30px; background: rgba(255, 0, 0, 0.4); }
-        #btn-build { bottom: 40px; right: 130px; background: rgba(0, 120, 255, 0.4); }
-        #btn-jump { bottom: 130px; right: 130px; }
-        #btn-sprint { bottom: 40px; right: 30px; }
+        #ui-layer { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); text-align: center; z-index: 20; }
+        #hp-bar-cont { width: 250px; height: 20px; background: rgba(0,0,0,0.5); border: 2px solid #fff; border-radius: 10px; overflow: hidden; }
+        #hp-fill { width: 100%; height: 100%; background: linear-gradient(90deg, #2ecc71, #27ae60); transition: width 0.1s; }
+        #hp-text { color: white; font-weight: bold; margin-bottom: 5px; text-shadow: 2px 2px 2px #000; }
 
-        #joystick-move { position: absolute; bottom: 50px; left: 50px; width: 120px; height: 120px; z-index: 20; }
-        #death-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(60, 0, 0, 0.9); color: white; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
-        button#restart { padding: 15px 40px; cursor: pointer; background: #fff; border: none; border-radius: 30px; font-weight: bold; margin-top: 20px; }
+        .m-btn { position: absolute; width: 70px; height: 70px; background: rgba(255,255,255,0.1); border: 2px solid #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 30px; z-index: 20; }
+        #b-shoot { bottom: 130px; right: 30px; background: rgba(231, 76, 60, 0.4); }
+        #b-build { bottom: 40px; right: 130px; background: rgba(52, 152, 219, 0.4); }
+        #b-jump { bottom: 130px; right: 130px; }
+        #b-sprint { bottom: 40px; right: 30px; }
+        #joystick { position: absolute; bottom: 50px; left: 50px; width: 120px; height: 120px; z-index: 20; }
+        
+        #death { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); color: white; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
+        button { padding: 15px 40px; font-size: 20px; cursor: pointer; background: #f1c40f; border: none; font-weight: bold; border-radius: 5px; }
     </style>
 </head>
 <body>
-    <div id="gui"><b>WASD</b> — move | <b>SHIFT</b> — run | <b>RBM / 🧱</b> — Build</div>
-    <div id="storm-timer">ЗОНА ЗВУЖУЄТЬСЯ!</div>
-    
-    <div id="joystick-move"></div>
-    <div id="btn-shoot" class="mobile-btn">🔫</div>
-    <div id="btn-build" class="mobile-btn">🧱</div>
-    <div id="btn-jump" class="mobile-btn">⬆️</div>
-    <div id="btn-sprint" class="mobile-btn">🏃</div>
 
-    <div id="death-screen">
-        <h1 id="death-msg">GAME OVER</h1>
-        <button id="restart" onclick="location.reload()">RESPAWN</button>
-    </div>
+    <div id="gui"><b>WASD</b>: Рух | <b>ЛКМ</b>: Вогонь | <b>ПКМ</b>: Будувати | <b>SPACE</b>: Стрибок</div>
+    <div id="storm-info">ЗОНА: 400м</div>
     <div id="crosshair"></div>
+    
+    <div id="ui-layer">
+        <div id="hp-text">100 HP</div>
+        <div id="hp-bar-cont"><div id="hp-fill"></div></div>
+    </div>
+
+    <div id="joystick"></div>
+    <div id="b-shoot" class="m-btn">🔥</div>
+    <div id="b-build" class="m-btn">🧱</div>
+    <div id="b-jump" class="m-btn">⬆️</div>
+    <div id="b-sprint" class="m-btn">🏃</div>
+
+    <div id="death">
+        <h1>YOU WERE ELIMINATED</h1>
+        <button onclick="location.reload()">TRY AGAIN</button>
+    </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.10.1/nipplejs.min.js"></script>
     <script type="importmap"> { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } } </script>
@@ -44,219 +55,208 @@
     <script type="module">
         import * as THREE from 'three';
 
+        // --- ІНІЦІАЛІЗАЦІЯ ---
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x87CEEB);
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(window.devicePixelRatio);
         document.body.appendChild(renderer.domElement);
 
-        scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 1.5));
+        const playerGroup = new THREE.Group();
+        scene.add(playerGroup);
+        playerGroup.add(camera);
+        camera.position.y = 1.7;
+
+        scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+        const sun = new THREE.DirectionalLight(0xffffff, 1.2);
+        sun.position.set(50, 100, 50);
+        scene.add(sun);
 
         const obstacles = [];
         const enemies = [];
-        let isDead = false;
-        let isSprinting = false;
+        let playerHP = 100, isDead = false, isSprinting = false, vY = 0, canJump = true, stormRadius = 400;
         const clock = new THREE.Clock();
 
-        // СВІТ
-        const ground = new THREE.Mesh(new THREE.PlaneGeometry(2000, 2000), new THREE.MeshLambertMaterial({ color: 0x3d9943 }));
+        // --- СВІТ (ЗЕМЛЯ, ГОРИ, ДЕРЕВА) ---
+        const ground = new THREE.Mesh(new THREE.PlaneGeometry(1000, 1000), new THREE.MeshLambertMaterial({ color: 0x27ae60 }));
         ground.rotation.x = -Math.PI / 2;
         scene.add(ground);
 
-        function addTree(x, z) {
-            const trunk = new THREE.Mesh(new THREE.BoxGeometry(1.5, 5, 1.5), new THREE.MeshLambertMaterial({ color: 0x5d4037 }));
-            trunk.position.set(x, 2.5, z);
-            scene.add(trunk);
-            const leaves = new THREE.Mesh(new THREE.BoxGeometry(5, 5, 5), new THREE.MeshLambertMaterial({ color: 0x2e7d32 }));
-            leaves.position.set(x, 6, z);
-            scene.add(leaves);
+        for(let i=0; i<20; i++) {
+            const h = 20 + Math.random()*30;
+            const m = new THREE.Mesh(new THREE.ConeGeometry(15, h, 4), new THREE.MeshLambertMaterial({ color: 0x7f8c8d }));
+            m.position.set(Math.random()*600-300, h/2, Math.random()*600-300);
+            scene.add(m); obstacles.push(m);
+        }
+
+        function spawnTree(x, z) {
+            const trunk = new THREE.Mesh(new THREE.BoxGeometry(1.2, 6, 1.2), new THREE.MeshLambertMaterial({ color: 0x5d4037 }));
+            trunk.position.set(x, 3, z);
+            const leaves = new THREE.Mesh(new THREE.SphereGeometry(3.5), new THREE.MeshLambertMaterial({ color: 0x2ecc71 }));
+            leaves.position.set(x, 7, z);
+            scene.add(trunk, leaves);
             obstacles.push(trunk);
         }
+        for(let i=0; i<40; i++) spawnTree(Math.random()*400-200, Math.random()*400-200);
 
-        function addMountain(x, z) {
-            const mount = new THREE.Mesh(new THREE.ConeGeometry(30, 60, 4), new THREE.MeshLambertMaterial({ color: 0x757575 }));
-            mount.position.set(x, 30, z);
-            scene.add(mount);
-            obstacles.push(mount);
-        }
-
-        for(let i=0; i<30; i++) addTree(Math.random()*600-300, Math.random()*600-300);
-        for(let i=0; i<10; i++) addMountain(Math.random()*1000-500, Math.random()*1000-500);
-
-        // ЗОНА
-        let stormRadius = 400;
-        const storm = new THREE.Mesh(
-            new THREE.CylinderGeometry(1, 1, 500, 64, 1, true),
+        // --- ЗОНА (STORM) ---
+        const stormMesh = new THREE.Mesh(
+            new THREE.CylinderGeometry(1, 1, 1000, 64, 1, true),
             new THREE.MeshBasicMaterial({ color: 0x6600ff, transparent: true, opacity: 0.3, side: THREE.DoubleSide })
         );
-        scene.add(storm);
+        scene.add(stormMesh);
 
-        // ГРАВЕЦЬ
-        const player = new THREE.Group();
-        scene.add(player);
-        player.add(camera);
-        camera.position.y = 1.7;
+        // --- ЗБРОЯ (ПОВНА МОДЕЛЬ) ---
+        const weapon = new THREE.Group();
+        const body = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.22, 0.7), new THREE.MeshLambertMaterial({color: 0x2c3e50}));
+        const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.5), new THREE.MeshLambertMaterial({color: 0x000000}));
+        barrel.rotation.x = Math.PI/2; barrel.position.z = -0.5;
+        const stock = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.3, 0.3), new THREE.MeshLambertMaterial({color: 0x2c3e50}));
+        stock.position.set(0, -0.1, 0.4);
+        const muzzleFlash = new THREE.PointLight(0xffaa00, 0, 5);
+        muzzleFlash.position.z = -0.8;
+        weapon.add(body, barrel, stock, muzzleFlash);
+        weapon.position.set(0.5, -0.35, -0.6);
+        camera.add(weapon);
 
-        const gun = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.2, 0.8), new THREE.MeshLambertMaterial({ color: 0x222222 }));
-        gun.position.set(0.35, 1.4, -0.5);
-        player.add(gun);
-
-        // КЕРУВАННЯ
-        let keys = {};
-        let moveInput = { x: 0, y: 0 };
-        document.addEventListener('keydown', (e) => { 
-            keys[e.code] = true; 
-            if(e.code === 'ShiftLeft') isSprinting = true;
-        });
-        document.addEventListener('keyup', (e) => { 
-            keys[e.code] = false;
-            if(e.code === 'ShiftLeft') isSprinting = false;
-        });
-
-        // БУДІВНИЦТВО ТА СТРІЛЬБА (PC)
-        window.addEventListener('mousedown', (e) => {
-            if (!document.pointerLockElement && window.innerWidth > 1000) { document.body.requestPointerLock(); return; }
-            if (e.button === 0) shoot();
-            if (e.button === 2) buildWall(); // Права кнопка миші
-        });
-        window.addEventListener('contextmenu', (e) => e.preventDefault()); // Вимикаємо стандартне меню ПКМ
-
+        // --- МЕХАНІКИ ---
         function shoot() {
-            gun.position.z += 0.2;
+            if(isDead) return;
+            weapon.position.z += 0.2; // Віддача
+            muzzleFlash.intensity = 15; setTimeout(() => muzzleFlash.intensity = 0, 50);
+
             const ray = new THREE.Raycaster();
-            const dir = new THREE.Vector3();
-            camera.getWorldDirection(dir);
-            ray.set(player.position, dir);
+            ray.setFromCamera({x:0, y:0}, camera);
             const hits = ray.intersectObjects(enemies.map(e => e.mesh));
             if(hits.length > 0) {
                 const en = enemies.find(e => e.mesh === hits[0].object);
-                en.health -= 50;
-                if(en.health <= 0) { scene.remove(en.mesh); enemies.splice(enemies.indexOf(en), 1); }
-            }
-        }
-
-        function buildWall() {
-            const wall = new THREE.Mesh(new THREE.BoxGeometry(5, 4, 0.8), new THREE.MeshLambertMaterial({ color: 0x7d5a44 }));
-            const dir = new THREE.Vector3();
-            camera.getWorldDirection(dir);
-            // Ставимо стіну трохи далі від гравця
-            const spawnPos = player.position.clone().add(dir.multiplyScalar(5));
-            wall.position.set(spawnPos.x, 2, spawnPos.z);
-            wall.rotation.y = player.rotation.y;
-            scene.add(wall);
-            obstacles.push(wall);
-        }
-
-        // МОБІЛЬНІ ПОДІЇ
-        document.getElementById('btn-shoot').addEventListener('touchstart', (e) => { e.preventDefault(); shoot(); });
-        document.getElementById('btn-build').addEventListener('touchstart', (e) => { e.preventDefault(); buildWall(); });
-        document.getElementById('btn-sprint').addEventListener('touchstart', (e) => { e.preventDefault(); isSprinting = true; });
-        document.getElementById('btn-sprint').addEventListener('touchend', () => isSprinting = false);
-        document.getElementById('btn-jump').addEventListener('touchstart', (e) => { e.preventDefault(); if(canJump) { vY = 0.25; canJump = false; } });
-
-        // Джойстик та Огляд
-        const joy = nipplejs.create({ zone: document.getElementById('joystick-move'), mode: 'static', position: { left: '70px', bottom: '70px' }, color: 'white' });
-        joy.on('move', (evt, data) => { moveInput.x = data.vector.x; moveInput.y = -data.vector.y; });
-        joy.on('end', () => { moveInput.x = 0; moveInput.y = 0; });
-
-        let tX, tY;
-        document.addEventListener('touchstart', (e) => { if(e.touches[0].clientX > window.innerWidth/2) { tX = e.touches[0].clientX; tY = e.touches[0].clientY; }}, {passive:false});
-        document.addEventListener('touchmove', (e) => {
-            for(let t of e.touches) {
-                if(t.clientX > window.innerWidth/2) {
-                    player.rotation.y -= (t.clientX - tX) * 0.007;
-                    camera.rotation.x -= (t.clientY - tY) * 0.007;
-                    camera.rotation.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, camera.rotation.x));
-                    tX = t.clientX; tY = t.clientY;
+                en.hp -= 35;
+                en.updateHP();
+                if(en.hp <= 0) {
+                    scene.remove(en.mesh, en.hpCont);
+                    enemies.splice(enemies.indexOf(en), 1);
                 }
             }
-        }, {passive:false});
-
-        document.addEventListener('mousemove', (e) => {
-            if(document.pointerLockElement) {
-                player.rotation.y -= e.movementX * 0.002;
-                camera.rotation.x -= e.movementY * 0.002;
-                camera.rotation.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, camera.rotation.x));
-            }
-        });
-
-        // КОЛІЗІЇ
-        const raycaster = new THREE.Raycaster();
-        function checkCol(pos, dir, dist) {
-            if (dir.length() === 0) return false;
-            raycaster.set(pos.clone().add(new THREE.Vector3(0, 1, 0)), dir.clone().normalize());
-            const hits = raycaster.intersectObjects(obstacles);
-            return hits.length > 0 && hits[0].distance < dist;
         }
 
-        // ЦИКЛ
-        let vY = 0, canJump = true;
+        function build() {
+            const wall = new THREE.Mesh(new THREE.BoxGeometry(5, 4, 0.6), new THREE.MeshLambertMaterial({ color: 0x8b4513 }));
+            const dir = new THREE.Vector3(); camera.getWorldDirection(dir);
+            const p = playerGroup.position.clone().add(dir.multiplyScalar(4));
+            wall.position.set(p.x, 2, p.z); wall.rotation.y = playerGroup.rotation.y;
+            scene.add(wall); obstacles.push(wall);
+        }
+
+        function checkCollision(pos, moveDir) {
+            const ray = new THREE.Raycaster(pos.clone().add(new THREE.Vector3(0,1,0)), moveDir.clone().normalize());
+            const intersects = ray.intersectObjects(obstacles);
+            return (intersects.length > 0 && intersects[0].distance < 1.8);
+        }
+
+        // --- КЕРУВАННЯ ---
+        let keys = {}, moveJoy = {x:0, y:0};
+        window.onkeydown = (e) => { 
+            keys[e.code] = true;
+            if(e.code === 'Space' && canJump) { vY = 0.25; canJump = false; }
+        };
+        window.onkeyup = (e) => keys[e.code] = false;
+        window.onmousedown = (e) => {
+            if(e.button === 0) shoot(); if(e.button === 2) build();
+            if(!document.pointerLockElement) document.body.requestPointerLock();
+        };
+
+        const manager = nipplejs.create({ zone: document.getElementById('joystick'), mode: 'static', position: {left: '70px', bottom: '70px'}, color: 'white' });
+        manager.on('move', (e, d) => { moveJoy.x = d.vector.x; moveJoy.y = -d.vector.y; });
+        manager.on('end', () => { moveJoy.x = 0; moveJoy.y = 0; });
+
+        document.onmousemove = (e) => {
+            if(document.pointerLockElement) {
+                playerGroup.rotation.y -= e.movementX * 0.003;
+                camera.rotation.x = Math.max(-1.5, Math.min(1.5, camera.rotation.x - e.movementY * 0.003));
+            }
+        };
+
+        // --- ВОРОГИ (БОТИ З HP БАРАМИ) ---
+        function spawnEnemy() {
+            if(enemies.length >= 6 || isDead) return;
+            const mesh = new THREE.Mesh(new THREE.BoxGeometry(2, 3, 2), new THREE.MeshLambertMaterial({ color: 0xe74c3c }));
+            const angle = Math.random() * Math.PI * 2;
+            mesh.position.set(playerGroup.position.x + Math.cos(angle)*40, 1.5, playerGroup.position.z + Math.sin(angle)*40);
+            
+            const hpCont = new THREE.Group();
+            const hpBg = new THREE.Mesh(new THREE.PlaneGeometry(2.5, 0.3), new THREE.MeshBasicMaterial({color: 0x000000}));
+            const hpBar = new THREE.Mesh(new THREE.PlaneGeometry(2.5, 0.3), new THREE.MeshBasicMaterial({color: 0xff0000}));
+            hpBar.position.z = 0.01; hpCont.add(hpBg, hpBar);
+            scene.add(mesh, hpCont);
+            
+            enemies.push({ 
+                mesh, hpCont, hpBar, hp: 100, lastShot: 0,
+                updateHP: function() { this.hpBar.scale.x = Math.max(0, this.hp/100); }
+            });
+        }
+        setInterval(spawnEnemy, 3500);
+
+        // --- ЦИКЛ АНІМАЦІЇ ---
         function animate() {
-            if (isDead) return;
+            if(isDead) return;
             requestAnimationFrame(animate);
             const delta = clock.getDelta();
 
             // Рух
-            const speed = (isSprinting ? 20 : 10) * delta;
-            let m = new THREE.Vector3();
-            if(keys['KeyW']) m.z -= 1; if(keys['KeyS']) m.z += 1;
-            if(keys['KeyA']) m.x -= 1; if(keys['KeyD']) m.x += 1;
-            m.x += moveInput.x; m.z += moveInput.y;
+            const speed = (isSprinting || keys['ShiftLeft'] ? 18 : 10) * delta;
+            let move = new THREE.Vector3();
+            if(keys['KeyW']) move.z -= 1; if(keys['KeyS']) move.z += 1;
+            if(keys['KeyA']) move.x -= 1; if(keys['KeyD']) move.x += 1;
+            move.x += moveJoy.x; move.z += moveJoy.y;
 
-            if(m.length() > 0) {
-                m.normalize().multiplyScalar(speed).applyQuaternion(player.quaternion);
-                if(!checkCol(player.position, m, 1.8)) player.position.add(m);
+            if(move.length() > 0) {
+                move.normalize().multiplyScalar(speed).applyQuaternion(playerGroup.quaternion);
+                if(!checkCollision(playerGroup.position, move)) playerGroup.position.add(move);
             }
 
             // Гравітація
-            if(keys['Space'] && canJump) { vY = 0.25; canJump = false; }
-            player.position.y += vY;
-            vY -= 0.6 * delta;
-            if(player.position.y <= 0) { player.position.y = 0; vY = 0; canJump = true; }
+            playerGroup.position.y += vY;
+            if(playerGroup.position.y > 0) vY -= 0.6 * delta; 
+            else { playerGroup.position.y = 0; vY = 0; canJump = true; }
 
             // Зона
-            stormRadius -= 1.2 * delta;
-            storm.scale.set(stormRadius, 1, stormRadius);
-            if(player.position.distanceTo(new THREE.Vector3(0,0,0)) > stormRadius) {
-                isDead = true;
-                document.getElementById('death-screen').style.display = 'flex';
+            stormRadius -= 0.6 * delta;
+            stormMesh.scale.set(stormRadius, 1, stormRadius);
+            document.getElementById('storm-info').innerText = "ЗОНА: " + Math.floor(stormRadius) + "м";
+            if(playerGroup.position.distanceTo(new THREE.Vector3(0,0,0)) > stormRadius) {
+                playerHP -= 6 * delta;
+                document.getElementById('hp-fill').style.width = playerHP + '%';
             }
 
-            // Вороги
+            // Логіка ботів
             enemies.forEach(e => {
-                const d = new THREE.Vector3().subVectors(player.position, e.mesh.position).normalize();
-                const s = d.clone().multiplyScalar(4 * delta);
-                if(!checkCol(e.mesh.position, s, 2)) e.mesh.position.add(s);
-                if(e.mesh.position.distanceTo(player.position) < 2) {
-                    isDead = true;
-                    document.getElementById('death-screen').style.display = 'flex';
+                const dist = e.mesh.position.distanceTo(playerGroup.position);
+                const dir = new THREE.Vector3().subVectors(playerGroup.position, e.mesh.position).normalize();
+                if(dist > 10) e.mesh.position.add(dir.multiplyScalar(6 * delta));
+                if(dist < 18 && Date.now() - e.lastShot > 1800) {
+                    playerHP -= 10; e.lastShot = Date.now();
+                    document.getElementById('hp-fill').style.width = playerHP + '%';
                 }
+                e.hpCont.position.set(e.mesh.position.x, 5, e.mesh.position.z);
+                e.hpCont.lookAt(playerGroup.position);
             });
 
-            gun.position.z = THREE.MathUtils.lerp(gun.position.z, -0.5, 5 * delta);
+            if(playerHP <= 0) { isDead = true; document.getElementById('death').style.display='flex'; document.exitPointerLock(); }
+
+            // Плавне повернення зброї після віддачі
+            weapon.position.z = THREE.MathUtils.lerp(weapon.position.z, -0.6, 10 * delta);
             renderer.render(scene, camera);
         }
-        
-        // Спавн NPC
-        setInterval(() => {
-            if(enemies.length < 10 && !isDead) {
-                const m = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), new THREE.MeshLambertMaterial({ color: 0xff0000 }));
-                const a = Math.random() * 6.28;
-                m.position.set(Math.cos(a)*70, 1, Math.sin(a)*70);
-                scene.add(m);
-                enemies.push({ mesh: m, health: 100 });
-            }
-        }, 4000);
+
+        // Мобільне керування
+        document.getElementById('b-shoot').ontouchstart = (e) => { e.preventDefault(); shoot(); };
+        document.getElementById('b-build').ontouchstart = (e) => { e.preventDefault(); build(); };
+        document.getElementById('b-jump').ontouchstart = (e) => { e.preventDefault(); if(canJump){vY=0.25; canJump=false;} };
+        document.getElementById('b-sprint').ontouchstart = () => isSprinting = true;
+        document.getElementById('b-sprint').ontouchend = () => isSprinting = false;
 
         animate();
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
     </script>
 </body>
-
 </html>
-
