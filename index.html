@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Fortnite JS - Full Unsimplified</title>
+    <title>Fortnite JS - Collision Update</title>
     <style>
         body { margin: 0; overflow: hidden; font-family: 'Arial', sans-serif; background: #000; touch-action: none; }
         #gui { position: absolute; top: 10px; left: 10px; color: white; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 5px; z-index: 10; pointer-events: none; border-left: 4px solid #f1c40f; }
@@ -78,7 +78,7 @@
         let playerHP = 100, isDead = false, isSprinting = false, vY = 0, canJump = true, stormRadius = 400;
         const clock = new THREE.Clock();
 
-        // --- СВІТ (ЗЕМЛЯ, ГОРИ, ДЕРЕВА) ---
+        // --- СВІТ ---
         const ground = new THREE.Mesh(new THREE.PlaneGeometry(1000, 1000), new THREE.MeshLambertMaterial({ color: 0x27ae60 }));
         ground.rotation.x = -Math.PI / 2;
         scene.add(ground);
@@ -100,30 +100,41 @@
         }
         for(let i=0; i<40; i++) spawnTree(Math.random()*400-200, Math.random()*400-200);
 
-        // --- ЗОНА (STORM) ---
         const stormMesh = new THREE.Mesh(
             new THREE.CylinderGeometry(1, 1, 1000, 64, 1, true),
             new THREE.MeshBasicMaterial({ color: 0x6600ff, transparent: true, opacity: 0.3, side: THREE.DoubleSide })
         );
         scene.add(stormMesh);
 
-        // --- ЗБРОЯ (ПОВНА МОДЕЛЬ) ---
         const weapon = new THREE.Group();
-        const body = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.22, 0.7), new THREE.MeshLambertMaterial({color: 0x2c3e50}));
+        const bBody = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.22, 0.7), new THREE.MeshLambertMaterial({color: 0x2c3e50}));
         const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.5), new THREE.MeshLambertMaterial({color: 0x000000}));
         barrel.rotation.x = Math.PI/2; barrel.position.z = -0.5;
         const stock = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.3, 0.3), new THREE.MeshLambertMaterial({color: 0x2c3e50}));
         stock.position.set(0, -0.1, 0.4);
         const muzzleFlash = new THREE.PointLight(0xffaa00, 0, 5);
         muzzleFlash.position.z = -0.8;
-        weapon.add(body, barrel, stock, muzzleFlash);
+        weapon.add(bBody, barrel, stock, muzzleFlash);
         weapon.position.set(0.5, -0.35, -0.6);
         camera.add(weapon);
+
+        // --- ФУНКЦІЇ КОЛІЗІЇ ---
+        function checkCollision(pos, moveDir) {
+            const ray = new THREE.Raycaster(pos.clone().add(new THREE.Vector3(0,1,0)), moveDir.clone().normalize());
+            const intersects = ray.intersectObjects(obstacles);
+            return (intersects.length > 0 && intersects[0].distance < 1.8);
+        }
+
+        function checkEnemyCollision(enemyPos, moveDir) {
+            const ray = new THREE.Raycaster(enemyPos.clone().add(new THREE.Vector3(0, 1.5, 0)), moveDir.clone().normalize());
+            const intersects = ray.intersectObjects(obstacles);
+            return (intersects.length > 0 && intersects[0].distance < 2.5);
+        }
 
         // --- МЕХАНІКИ ---
         function shoot() {
             if(isDead) return;
-            weapon.position.z += 0.2; // Віддача
+            weapon.position.z += 0.2;
             muzzleFlash.intensity = 15; setTimeout(() => muzzleFlash.intensity = 0, 50);
 
             const ray = new THREE.Raycaster();
@@ -146,12 +157,6 @@
             const p = playerGroup.position.clone().add(dir.multiplyScalar(4));
             wall.position.set(p.x, 2, p.z); wall.rotation.y = playerGroup.rotation.y;
             scene.add(wall); obstacles.push(wall);
-        }
-
-        function checkCollision(pos, moveDir) {
-            const ray = new THREE.Raycaster(pos.clone().add(new THREE.Vector3(0,1,0)), moveDir.clone().normalize());
-            const intersects = ray.intersectObjects(obstacles);
-            return (intersects.length > 0 && intersects[0].distance < 1.8);
         }
 
         // --- КЕРУВАННЯ ---
@@ -177,7 +182,7 @@
             }
         };
 
-        // --- ВОРОГИ (БОТИ З HP БАРАМИ) ---
+        // --- БОТИ ---
         function spawnEnemy() {
             if(enemies.length >= 6 || isDead) return;
             const mesh = new THREE.Mesh(new THREE.BoxGeometry(2, 3, 2), new THREE.MeshLambertMaterial({ color: 0xe74c3c }));
@@ -203,7 +208,7 @@
             requestAnimationFrame(animate);
             const delta = clock.getDelta();
 
-            // Рух
+            // Рух гравця
             const speed = (isSprinting || keys['ShiftLeft'] ? 18 : 10) * delta;
             let move = new THREE.Vector3();
             if(keys['KeyW']) move.z -= 1; if(keys['KeyS']) move.z += 1;
@@ -226,25 +231,38 @@
             document.getElementById('storm-info').innerText = "ЗОНА: " + Math.floor(stormRadius) + "м";
             if(playerGroup.position.distanceTo(new THREE.Vector3(0,0,0)) > stormRadius) {
                 playerHP -= 6 * delta;
-                document.getElementById('hp-fill').style.width = playerHP + '%';
             }
 
-            // Логіка ботів
+            // Логіка ботів з колізією
             enemies.forEach(e => {
                 const dist = e.mesh.position.distanceTo(playerGroup.position);
-                const dir = new THREE.Vector3().subVectors(playerGroup.position, e.mesh.position).normalize();
-                if(dist > 10) e.mesh.position.add(dir.multiplyScalar(6 * delta));
+                const dirToPlayer = new THREE.Vector3().subVectors(playerGroup.position, e.mesh.position).normalize();
+                
+                if(dist > 10) {
+                    // Перевірка колізії для бота
+                    if (!checkEnemyCollision(e.mesh.position, dirToPlayer)) {
+                        e.mesh.position.add(dirToPlayer.clone().multiplyScalar(6 * delta));
+                    } else {
+                        // Обхід перешкоди вбік
+                        const sideDir = new THREE.Vector3(-dirToPlayer.z, 0, dirToPlayer.x);
+                        e.mesh.position.add(sideDir.multiplyScalar(4 * delta));
+                    }
+                }
+
                 if(dist < 18 && Date.now() - e.lastShot > 1800) {
                     playerHP -= 10; e.lastShot = Date.now();
-                    document.getElementById('hp-fill').style.width = playerHP + '%';
                 }
+                
                 e.hpCont.position.set(e.mesh.position.x, 5, e.mesh.position.z);
                 e.hpCont.lookAt(playerGroup.position);
             });
 
+            // Оновлення інтерфейсу HP
+            document.getElementById('hp-fill').style.width = playerHP + '%';
+            document.getElementById('hp-text').innerText = Math.max(0, Math.ceil(playerHP)) + " HP";
+
             if(playerHP <= 0) { isDead = true; document.getElementById('death').style.display='flex'; document.exitPointerLock(); }
 
-            // Плавне повернення зброї після віддачі
             weapon.position.z = THREE.MathUtils.lerp(weapon.position.z, -0.6, 10 * delta);
             renderer.render(scene, camera);
         }
