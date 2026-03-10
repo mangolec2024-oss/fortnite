@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Fortnite JS - Collision Update</title>
+    <title>Fortnite JS - Mobile Look Update</title>
     <style>
         body { margin: 0; overflow: hidden; font-family: 'Arial', sans-serif; background: #000; touch-action: none; }
         #gui { position: absolute; top: 10px; left: 10px; color: white; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 5px; z-index: 10; pointer-events: none; border-left: 4px solid #f1c40f; }
@@ -29,12 +29,12 @@
 </head>
 <body>
 
-    <div id="gui"><b>WASD</b>: move | <b>LBM</b>: shoot | <b>RBM</b>: build | <b>SPACE</b>: jump</div>
+    <div id="gui"><b>WASD</b>: Рух | <b>ЛКМ</b>: Вогонь | <b>ПКМ</b>: Будувати | <b>SPACE</b>: Стрибок</div>
     <div id="storm-info">ЗОНА: 400м</div>
     <div id="crosshair"></div>
     
     <div id="ui-layer">
-        <div id="hp-text">300 HP</div>
+        <div id="hp-text">100 HP</div>
         <div id="hp-bar-cont"><div id="hp-fill"></div></div>
     </div>
 
@@ -159,7 +159,7 @@
             scene.add(wall); obstacles.push(wall);
         }
 
-        // --- КЕРУВАННЯ ---
+        // --- КЕРУВАННЯ (PC + MOBILE LOOK) ---
         let keys = {}, moveJoy = {x:0, y:0};
         window.onkeydown = (e) => { 
             keys[e.code] = true;
@@ -170,6 +170,26 @@
             if(e.button === 0) shoot(); if(e.button === 2) build();
             if(!document.pointerLockElement) document.body.requestPointerLock();
         };
+
+        // Мобільна камера (Touch Look)
+        let touchX = 0, touchY = 0;
+        document.addEventListener('touchstart', (e) => {
+            if (e.target.tagName === 'CANVAS') {
+                touchX = e.touches[0].pageX;
+                touchY = e.touches[0].pageY;
+            }
+        }, { passive: false });
+
+        document.addEventListener('touchmove', (e) => {
+            if (e.target.tagName === 'CANVAS') {
+                const deltaX = e.touches[0].pageX - touchX;
+                const deltaY = e.touches[0].pageY - touchY;
+                playerGroup.rotation.y -= deltaX * 0.006;
+                camera.rotation.x = Math.max(-1.5, Math.min(1.5, camera.rotation.x - deltaY * 0.006));
+                touchX = e.touches[0].pageX;
+                touchY = e.touches[0].pageY;
+            }
+        }, { passive: false });
 
         const manager = nipplejs.create({ zone: document.getElementById('joystick'), mode: 'static', position: {left: '70px', bottom: '70px'}, color: 'white' });
         manager.on('move', (e, d) => { moveJoy.x = d.vector.x; moveJoy.y = -d.vector.y; });
@@ -208,7 +228,6 @@
             requestAnimationFrame(animate);
             const delta = clock.getDelta();
 
-            // Рух гравця
             const speed = (isSprinting || keys['ShiftLeft'] ? 18 : 10) * delta;
             let move = new THREE.Vector3();
             if(keys['KeyW']) move.z -= 1; if(keys['KeyS']) move.z += 1;
@@ -220,12 +239,10 @@
                 if(!checkCollision(playerGroup.position, move)) playerGroup.position.add(move);
             }
 
-            // Гравітація
             playerGroup.position.y += vY;
             if(playerGroup.position.y > 0) vY -= 0.6 * delta; 
             else { playerGroup.position.y = 0; vY = 0; canJump = true; }
 
-            // Зона
             stormRadius -= 0.6 * delta;
             stormMesh.scale.set(stormRadius, 1, stormRadius);
             document.getElementById('storm-info').innerText = "ЗОНА: " + Math.floor(stormRadius) + "м";
@@ -233,17 +250,14 @@
                 playerHP -= 6 * delta;
             }
 
-            // Логіка ботів з колізією
             enemies.forEach(e => {
                 const dist = e.mesh.position.distanceTo(playerGroup.position);
                 const dirToPlayer = new THREE.Vector3().subVectors(playerGroup.position, e.mesh.position).normalize();
                 
                 if(dist > 10) {
-                    // Перевірка колізії для бота
                     if (!checkEnemyCollision(e.mesh.position, dirToPlayer)) {
                         e.mesh.position.add(dirToPlayer.clone().multiplyScalar(6 * delta));
                     } else {
-                        // Обхід перешкоди вбік
                         const sideDir = new THREE.Vector3(-dirToPlayer.z, 0, dirToPlayer.x);
                         e.mesh.position.add(sideDir.multiplyScalar(4 * delta));
                     }
@@ -257,7 +271,6 @@
                 e.hpCont.lookAt(playerGroup.position);
             });
 
-            // Оновлення інтерфейсу HP
             document.getElementById('hp-fill').style.width = playerHP + '%';
             document.getElementById('hp-text').innerText = Math.max(0, Math.ceil(playerHP)) + " HP";
 
@@ -267,7 +280,6 @@
             renderer.render(scene, camera);
         }
 
-        // Мобільне керування
         document.getElementById('b-shoot').ontouchstart = (e) => { e.preventDefault(); shoot(); };
         document.getElementById('b-build').ontouchstart = (e) => { e.preventDefault(); build(); };
         document.getElementById('b-jump').ontouchstart = (e) => { e.preventDefault(); if(canJump){vY=0.25; canJump=false;} };
@@ -278,4 +290,3 @@
     </script>
 </body>
 </html>
-
